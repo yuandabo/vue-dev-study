@@ -11,13 +11,15 @@ function Vue (options) {
   ) {
     warn('Vue is a constructor and should be called with the `new` keyword')
   }
-  this._init(options)
+  this._init(options) // uid,_isVue,_self
 }
 
 initMixin(Vue) // Vue.prototype add _init()
 stateMixin(Vue)// Vue.prototype add '$data,$props',$set,$delete ,$watch
 eventsMixin(Vue)// Vue.prototype add $on,$once,$off,$emit
 lifecycleMixin(Vue)// Vue.prototype add   _update, $forceUpdate,$destroy
-renderMixin(Vue)
+renderMixin(Vue)// Vue.prototype add $nextTick,_render
+
+console.log(Vue.prototype)
 
 export default Vue

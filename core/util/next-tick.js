@@ -39,6 +39,12 @@ let timerFunc
 // completely stops working after triggering a few times... so, if native
 // Promise is available, we will use it:
 /* istanbul ignore next, $flow-disable-line */
+/* 
+1. promise
+2. mutationObserver
+3. setImmediate
+4. setTimeout
+*/
 if (typeof Promise !== 'undefined' && isNative(Promise)) {
   const p = Promise.resolve()
   timerFunc = () => {
@@ -86,17 +92,18 @@ if (typeof Promise !== 'undefined' && isNative(Promise)) {
 
 export function nextTick (cb?: Function, ctx?: Object) {
   let _resolve
-  callbacks.push(() => {
-    if (cb) {
-      try {
-        cb.call(ctx)
-      } catch (e) {
-        handleError(e, ctx, 'nextTick')
+  callbacks.push(
+    () => {
+      if (cb) {
+        try {
+          cb.call(ctx)
+        } catch (e) {
+          handleError(e, ctx, 'nextTick')
+        }
+      } else if (_resolve) {
+        _resolve(ctx)
       }
-    } else if (_resolve) {
-      _resolve(ctx)
-    }
-  })
+    })
   if (!pending) {
     pending = true
     timerFunc()
