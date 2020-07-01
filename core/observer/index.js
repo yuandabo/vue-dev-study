@@ -48,6 +48,7 @@ export class Observer { // 监听对象
     this.dep = new Dep() // 新建一个dep函数
     this.vmCount = 0
     def(value, '__ob__', this)
+    // 如何实现对数组的监听  initData() -> new Observer -> protoAugment -> def()：劫持原数组方法的value -> observeArray()
     if (Array.isArray(value)) {
       if (hasProto) {
         protoAugment(value, arrayMethods)
