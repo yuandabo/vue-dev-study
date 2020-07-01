@@ -42,7 +42,7 @@ export default class Watcher {
   getter: Function;
   value: any;
 
-  constructor (
+  constructor(
     vm: Component,
     expOrFn: string | Function,
     cb: Function,
@@ -77,7 +77,7 @@ export default class Watcher {
       : ''
     // parse expression for getter
     if (typeof expOrFn === 'function') {
-      this.getter = expOrFn
+      this.getter = expOrFn // a()
     } else {
       this.getter = parsePath(expOrFn)
       if (!this.getter) {
@@ -93,6 +93,7 @@ export default class Watcher {
     this.value = this.lazy
       ? undefined
       : this.get()
+    // computed this.value = undefined
   }
 
   /**
@@ -103,7 +104,7 @@ export default class Watcher {
     let value
     const vm = this.vm
     try {
-      value = this.getter.call(vm, vm)
+      value = this.getter.call(vm, vm) // a.call(vm,vm) return this.b
     } catch (e) {
       if (this.user) {
         handleError(e, vm, `getter for watcher "${this.expression}"`)
@@ -160,6 +161,7 @@ export default class Watcher {
   /**
    * Subscriber interface.
    * Will be called when a dependency changes.
+   * 异步更新视图.  dep.notify() ->  watcher.updata() -> queueWatcher() -> nextTick(flushSchedulerQueue()):异步清空
    */
   update () {
     /* istanbul ignore else */

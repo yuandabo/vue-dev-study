@@ -16,7 +16,7 @@ import {
 import {
   warn,
   bind,
-  noop,
+  noop,// 空函数fn(a,b,c){}
   hasOwn,
   hyphenate,
   isReserved,
@@ -55,7 +55,8 @@ export function initState (vm: Component) {
   } else {
     observe(vm._data = {}, true /* asRootData */)
   }
-  if (opts.computed) initComputed(vm, opts.computed) // computed:{}
+  if (opts.computed) initComputed(vm, opts.computed) // computed:{}  
+  // initComputed() -> new Watcher() -> defineComputed() ->createComputedGetter() (dirty==true)-> watcher.evaluate()
   if (opts.watch && opts.watch !== nativeWatch) {
     initWatch(vm, opts.watch)
   }
@@ -174,7 +175,7 @@ export function getData (data: Function, vm: Component): any {
 }
 
 const computedWatcherOptions = { lazy: true }
-
+// initComputed(vm, opts.computed) computed:{ a(){return b}}
 function initComputed (vm: Component, computed: Object) {
   // $flow-disable-line
   const watchers = vm._computedWatchers = Object.create(null)
@@ -182,7 +183,7 @@ function initComputed (vm: Component, computed: Object) {
   const isSSR = isServerRendering()
 
   for (const key in computed) {
-    const userDef = computed[key]
+    const userDef = computed[key] //a
     const getter = typeof userDef === 'function' ? userDef : userDef.get
     if (process.env.NODE_ENV !== 'production' && getter == null) {
       warn(
@@ -195,10 +196,10 @@ function initComputed (vm: Component, computed: Object) {
       // create internal watcher for the computed property. 为计算属性创建内部观察程序。
       watchers[key] = new Watcher(
         vm,
-        getter || noop,
+        getter || noop, // a()
         noop,
-        computedWatcherOptions
-      )
+        computedWatcherOptions // lazt:true
+      ) // return watcher
     }
 
     // component-defined computed properties are already defined on the
@@ -215,7 +216,7 @@ function initComputed (vm: Component, computed: Object) {
     }
   }
 }
-
+// defineComputed(vm, key, userDef) defineComputed(vm, a, a())
 export function defineComputed (
   target: any,
   key: string,
@@ -225,7 +226,7 @@ export function defineComputed (
   if (typeof userDef === 'function') {
     sharedPropertyDefinition.get = shouldCache
       ? createComputedGetter(key)
-      : createGetterInvoker(userDef)// fuwuduang
+      : createGetterInvoker(userDef)
     sharedPropertyDefinition.set = noop
   } else {
     sharedPropertyDefinition.get = userDef.get
@@ -246,7 +247,7 @@ export function defineComputed (
   }
   Object.defineProperty(target, key, sharedPropertyDefinition)
 }
-
+// createComputedGetter(a)
 function createComputedGetter (key) {
   return function computedGetter () {
     const watcher = this._computedWatchers && this._computedWatchers[key]
