@@ -9,13 +9,13 @@ export let isUsingMicroTask = false
 
 const callbacks = []
 let pending = false
-
+// 刷新回调
 function flushCallbacks () {
-  pending = false
-  const copies = callbacks.slice(0)
-  callbacks.length = 0
+  pending = false // 重置pending
+  const copies = callbacks.slice(0) // 浅拷贝
+  callbacks.length = 0 // 清空cb数组
   for (let i = 0; i < copies.length; i++) {
-    copies[i]()
+    copies[i]() // 执行cb
   }
 }
 
@@ -62,15 +62,16 @@ if (typeof Promise !== 'undefined' && isNative(Promise)) {
   // PhantomJS and iOS 7.x
   MutationObserver.toString() === '[object MutationObserverConstructor]'
 )) {
+  // MutationObserver接口提供了监视对DOM树所做更改的能力
   // Use MutationObserver where native Promise is not available,
   // e.g. PhantomJS, iOS7, Android 4.4
   // (#6466 MutationObserver is unreliable in IE11)
   let counter = 1
   const observer = new MutationObserver(flushCallbacks)
-  const textNode = document.createTextNode(String(counter))
+  const textNode = document.createTextNode(String(counter))// 创建一个文本结点
   observer.observe(textNode, {
     characterData: true
-  })
+  }) // 开启监听
   timerFunc = () => {
     counter = (counter + 1) % 2
     textNode.data = String(counter)
@@ -89,9 +90,16 @@ if (typeof Promise !== 'undefined' && isNative(Promise)) {
     setTimeout(flushCallbacks, 0)
   }
 }
-
+/*
+$nextTick(
+  ()=>{
+    xxx
+  }
+)
+*/
 export function nextTick (cb?: Function, ctx?: Object) {
   let _resolve
+  // 加入队列
   callbacks.push(
     () => {
       if (cb) {
@@ -103,10 +111,11 @@ export function nextTick (cb?: Function, ctx?: Object) {
       } else if (_resolve) {
         _resolve(ctx)
       }
-    })
+    }
+  )
   if (!pending) {
     pending = true
-    timerFunc()
+    timerFunc() // 执行方法
   }
   // $flow-disable-line
   if (!cb && typeof Promise !== 'undefined') {

@@ -23,7 +23,7 @@ import {
   handleError,
   nativeWatch,
   validateProp,
-  isPlainObject,
+  isPlainObject,//是纯对象(ToString() === [obj obj])
   isServerRendering,
   isReservedAttribute
 } from '../util/index'
@@ -46,28 +46,29 @@ export function proxy (target: Object, sourceKey: string, key: string) {
 }
 
 export function initState (vm: Component) {
-  vm._watchers = []
-  const opts = vm.$options
-  if (opts.props) initProps(vm, opts.props)
-  if (opts.methods) initMethods(vm, opts.methods)
-  if (opts.data) {
+  vm._watchers = []  // add
+  const opts = vm.$options // 获取obj  new vue(obj) 
+  if (opts.props) initProps(vm, opts.props)  // 初始化props,监听Props
+  if (opts.methods) initMethods(vm, opts.methods) // methods:{}  vm['functionName'] = bind('vm','function')
+  if (opts.data) { // 初始化data并监听
     initData(vm)
   } else {
     observe(vm._data = {}, true /* asRootData */)
   }
-  if (opts.computed) initComputed(vm, opts.computed)
+  if (opts.computed) initComputed(vm, opts.computed) // computed:{}
   if (opts.watch && opts.watch !== nativeWatch) {
     initWatch(vm, opts.watch)
   }
 }
 
+// 初始化props
 function initProps (vm: Component, propsOptions: Object) {
   const propsData = vm.$options.propsData || {}
   const props = vm._props = {}
   // cache prop keys so that future props updates can iterate using Array
   // instead of dynamic object key enumeration.
   const keys = vm.$options._propKeys = []
-  const isRoot = !vm.$parent
+  const isRoot = !vm.$parent  // 是否根节点
   // root instance props should be converted
   if (!isRoot) {
     toggleObserving(false)
@@ -97,7 +98,7 @@ function initProps (vm: Component, propsOptions: Object) {
         }
       })
     } else {
-      defineReactive(props, key, value)
+      defineReactive(props, key, value)  // 监听props
     }
     // static props are already proxied on the component's prototype
     // during Vue.extend(). We only need to proxy props defined at
@@ -108,12 +109,19 @@ function initProps (vm: Component, propsOptions: Object) {
   }
   toggleObserving(true)
 }
-
+/* 
+data(){
+  return {
+    a:1
+  }
+}
+*/
 function initData (vm: Component) {
   let data = vm.$options.data
   data = vm._data = typeof data === 'function'
     ? getData(data, vm)
     : data || {}
+  // data = {a:1}
   if (!isPlainObject(data)) {
     data = {}
     process.env.NODE_ENV !== 'production' && warn(
@@ -137,17 +145,18 @@ function initData (vm: Component) {
         )
       }
     }
-    if (props && hasOwn(props, key)) {
+    if (props && hasOwn(props, key)) { // props 不能等于data
       process.env.NODE_ENV !== 'production' && warn(
         `The data property "${key}" is already declared as a prop. ` +
         `Use prop default value instead.`,
         vm
       )
     } else if (!isReserved(key)) {
+      // 内部属性
       proxy(vm, `_data`, key)
     }
   }
-  // observe data
+  // observe data 监听data
   observe(data, true /* asRootData */)
 }
 
@@ -182,8 +191,8 @@ function initComputed (vm: Component, computed: Object) {
       )
     }
 
-    if (!isSSR) {
-      // create internal watcher for the computed property.
+    if (!isSSR) {  // 不是服务端渲染
+      // create internal watcher for the computed property. 为计算属性创建内部观察程序。
       watchers[key] = new Watcher(
         vm,
         getter || noop,
@@ -216,7 +225,7 @@ export function defineComputed (
   if (typeof userDef === 'function') {
     sharedPropertyDefinition.get = shouldCache
       ? createComputedGetter(key)
-      : createGetterInvoker(userDef)
+      : createGetterInvoker(userDef)// fuwuduang
     sharedPropertyDefinition.set = noop
   } else {
     sharedPropertyDefinition.get = userDef.get
@@ -342,30 +351,27 @@ export function stateMixin (Vue: Class<Component>) {
   Vue.prototype.$set = set
   Vue.prototype.$delete = del
 
-
-  /*
-    $watch:{'expOrFn',cb,options}
-  */
+  // new 一个watch对象，返回一个解除watch的函数
   Vue.prototype.$watch = function (
     expOrFn: string | Function,
     cb: any,
     options?: Object
   ): Function {
     const vm: Component = this
-    if (isPlainObject(cb)) {
+    if (isPlainObject(cb)) {  // 回调函数是不是一个对象（非用户操作）
       return createWatcher(vm, expOrFn, cb, options)
     }
     options = options || {}
-    options.user = true // 标记用户身份
+    options.user = true // 用户操作
     const watcher = new Watcher(vm, expOrFn, cb, options)
-    if (options.immediate) {
+    if (options.immediate) { // 用户配置了immediate:true
       try {
-        cb.call(vm, watcher.value)
+        cb.call(vm, watcher.value)  // 立即执行回调函数
       } catch (error) {
         handleError(error, vm, `callback for immediate watcher "${watcher.expression}"`)
       }
     }
-    return function unwatchFn () {
+    return function unwatchFn () {  // $watch的返回值为一个关闭watch的函数
       watcher.teardown()
     }
   }

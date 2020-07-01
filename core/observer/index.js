@@ -16,15 +16,16 @@ import {
   isServerRendering
 } from '../util/index'
 
+// 获取配置对象
 const arrayKeys = Object.getOwnPropertyNames(arrayMethods)
 
 /**
  * In some cases we may want to disable observation inside a component's
  * update computation.
  */
-export let shouldObserve: boolean = true
+export let shouldObserve: boolean = true  //是否应该被监听
 
-export function toggleObserving (value: boolean) {
+export function toggleObserving (value: boolean) {  // 改变是否被监听的状态
   shouldObserve = value
 }
 
@@ -34,14 +35,17 @@ export function toggleObserving (value: boolean) {
  * object's property keys into getter/setters that
  * collect dependencies and dispatch updates.
  */
-export class Observer {
+/*
+new Obeserver({a:1})
+*/
+export class Observer { // 监听对象
   value: any;
   dep: Dep;
-  vmCount: number; // number of vms that have this object as root $data
+  vmCount: number; // number of vms that have this object as root $data（将此对象作为根$data的vm数）     
 
-  constructor (value: any) {
+  constructor(value: any) {
     this.value = value
-    this.dep = new Dep()
+    this.dep = new Dep() // 新建一个dep函数
     this.vmCount = 0
     def(value, '__ob__', this)
     if (Array.isArray(value)) {
@@ -106,8 +110,16 @@ function copyAugment (target: Object, src: Object, keys: Array<string>) {
  * Attempt to create an observer instance for a value,
  * returns the new observer if successfully observed,
  * or the existing observer if the value already has one.
+ * 尝试为值创建观察者实例，
+ * 如果观察成功，返回新的观察者，
+ * 或者现有的观察者（如果该值已经有一个）。
  */
+/* 
+响应式：
+initData() -> observe({a:1},true) -> new Obeserver({a:1}) -> walk({a:1}) -> defineReactive({a:1},keys)：Object.defineProperty()
+*/
 export function observe (value: any, asRootData: ?boolean): Observer | void {
+  // 不是一个对象或者被监听过
   if (!isObject(value) || value instanceof VNode) {
     return
   }
@@ -130,8 +142,11 @@ export function observe (value: any, asRootData: ?boolean): Observer | void {
 }
 
 /**
- * Define a reactive property on an Object.
+ * Define a reactive property on an Object. 定义对象的反应属性。 拦截set、get方法
  */
+/* 
+defineReactive({a:'1'}, 'a')
+*/
 export function defineReactive (
   obj: Object,
   key: string,
@@ -153,7 +168,7 @@ export function defineReactive (
     val = obj[key]
   }
 
-  let childOb = !shallow && observe(val)
+  let childOb = !shallow && observe(val)  // return ob
   Object.defineProperty(obj, key, {
     enumerable: true,
     configurable: true,
@@ -173,11 +188,11 @@ export function defineReactive (
     set: function reactiveSetter (newVal) {
       const value = getter ? getter.call(obj) : val
       /* eslint-disable no-self-compare */
-      if (newVal === value || (newVal !== newVal && value !== value)) {
+      if (newVal === value || (newVal !== newVal && value !== value)) {  // 判断是否是NAN或者值没有变
         return
       }
       /* eslint-enable no-self-compare */
-      if (process.env.NODE_ENV !== 'production' && customSetter) {
+      if (process.env.NODE_ENV !== 'production' && customSetter) { // 非生产环境并具有自定义set函数时
         customSetter()
       }
       // #7981: for accessor properties without setter
@@ -187,8 +202,8 @@ export function defineReactive (
       } else {
         val = newVal
       }
-      childOb = !shallow && observe(newVal)
-      dep.notify()
+      childOb = !shallow && observe(newVal)  // 监听新值
+      dep.notify() // 发布
     }
   })
 }
