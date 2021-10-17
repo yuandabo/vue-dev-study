@@ -508,7 +508,7 @@ export function createPatchFunction (backend) {
         canMove &&
           nodeOps.insertBefore(
             parentElm,
-            oldStartVnode.elm,  // 换位 将新结点放入老结点
+            oldStartVnode.elm,  // 换位 将结点放入老结点
             nodeOps.nextSibling(oldEndVnode.elm)
           )
         oldStartVnode = oldCh[++oldStartIdx]
@@ -528,14 +528,14 @@ export function createPatchFunction (backend) {
         oldEndVnode = oldCh[--oldEndIdx]
         newStartVnode = newCh[++newStartIdx]
       } else {
-        // 没有一个相同的
+        // 通过Keyp匹配
         if (isUndef(oldKeyToIdx))
           oldKeyToIdx = createKeyToOldIdx(oldCh, oldStartIdx, oldEndIdx)
         idxInOld = isDef(newStartVnode.key)
           ? oldKeyToIdx[newStartVnode.key]
           : findIdxInOld(newStartVnode, oldCh, oldStartIdx, oldEndIdx)
-        if (isUndef(idxInOld)) {
-          // New element  没有 Key 的情况下 直接在旧结点上新建结点
+        if (isUndef(idxInOld)) { 
+          // New element   Key 无匹配 的情况下 直接在旧结点上新建结点
           createElm(
             newStartVnode,
             insertedVnodeQueue,
@@ -546,8 +546,8 @@ export function createPatchFunction (backend) {
             newStartIdx
           )
         } else {
-          // 有 key 的情况
-          vnodeToMove = oldCh[idxInOld]
+          // 有 key 匹配 的情况
+          vnodeToMove = oldCh[idxInOld]  // 记录老结点的 key
           if (sameVnode(vnodeToMove, newStartVnode)) { 
             patchVnode(
               vnodeToMove,
@@ -638,7 +638,7 @@ export function createPatchFunction (backend) {
       vnode = ownerArray[index] = cloneVNode(vnode)
     }
 
-    const elm = (vnode.elm = oldVnode.elm)
+    const elm = (vnode.elm = oldVnode.elm)  // 
 
     if (isTrue(oldVnode.isAsyncPlaceholder)) {
       if (isDef(vnode.asyncFactory.resolved)) {
@@ -682,20 +682,18 @@ export function createPatchFunction (backend) {
         if (oldCh !== ch)
           // 旧结点的第一层子结点与新结点的第一层子结点都存在且不同
           updateChildren(elm, oldCh, ch, insertedVnodeQueue, removeOnly)
-      } else if (isDef(ch)) {
-        if (process.env.NODE_ENV !== 'production') {
-          checkDuplicateKeys(ch)
-        }
-        if (isDef(oldVnode.text)) nodeOps.setTextContent(elm, '')
-        addVnodes(elm, null, ch, 0, ch.length - 1, insertedVnodeQueue)
+      } else if (isDef(ch)) { // 新结点存在子结点 代表着旧结点无子结点
+        if (isDef(oldVnode.text)) nodeOps.setTextContent(elm, '')  // 老结点是文字结点 ， 真实结点设置一个''的文字结点
+        addVnodes(elm, null, ch, 0, ch.length - 1, insertedVnodeQueue) // 将新结点的子结点插入 真实 dom
       } else if (isDef(oldCh)) {
-        removeVnodes(oldCh, 0, oldCh.length - 1)
-      } else if (isDef(oldVnode.text)) {
-        nodeOps.setTextContent(elm, '')
+        // 旧结点存在子结点 代表着新结点无子结点
+        removeVnodes(oldCh, 0, oldCh.length - 1) // 移除旧结点的子结点
+      } else if (isDef(oldVnode.text)) { // 老结点新结点都无字结点
+        nodeOps.setTextContent(elm, '') // 设置真实dom 上的text= '' 等于移除所有结点
       }
-    } else if (oldVnode.text !== vnode.text) {
+    } else if (oldVnode.text !== vnode.text) { // 新结点是文字结点 且 老结点的文字与新结点的不同
       // 是 text 结点 且内容不同直接值字符串
-      nodeOps.setTextContent(elm, vnode.text)
+      nodeOps.setTextContent(elm, vnode.text) // 更新真实 dom 上的文字
     }
     if (isDef(data)) {
       if (isDef((i = data.hook)) && isDef((i = i.postpatch))) i(oldVnode, vnode)
