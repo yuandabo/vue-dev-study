@@ -255,6 +255,7 @@ export function createPatchFunction (backend) {
     }
   }
 
+  // 使用 keep-alive
   function reactivateComponent(vnode, insertedVnodeQueue, parentElm, refElm) {
     let i
     // hack for #4339: a reactivated component with inner transition

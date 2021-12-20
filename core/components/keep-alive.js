@@ -53,7 +53,7 @@ const patternTypes: Array<Function> = [String, RegExp, Array]
 
 export default {
   name: 'keep-alive',
-  abstract: true,
+  abstract: true, // 抽象组件 自定义组件
 
   props: {
     include: patternTypes,
@@ -95,7 +95,7 @@ export default {
         // excluded
         (exclude && name && matches(exclude, name))
       ) {
-        return vnode
+        return vnode // 被过滤直接返回原 vnode  keepalive 失败
       }
 
       const { cache, keys } = this
@@ -110,15 +110,15 @@ export default {
         remove(keys, key)
         keys.push(key)
       } else {
-        cache[key] = vnode
-        keys.push(key)
+        cache[key] = vnode // cashe 保存 vnode
+        keys.push(key) // keys 保存 key
         // prune oldest entry
         if (this.max && keys.length > parseInt(this.max)) {
-          pruneCacheEntry(cache, keys[0], keys, this._vnode)
+          pruneCacheEntry(cache, keys[0], keys, this._vnode) // 如果超过最大的cache数量 LRU 删除第一个
         }
       }
 
-      vnode.data.keepAlive = true
+      vnode.data.keepAlive = true // 在当前组件下标记被 Keepalive 缓存成功
     }
     return vnode || (slot && slot[0])
   }
