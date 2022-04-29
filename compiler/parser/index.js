@@ -58,10 +58,10 @@ let platformGetTagNamespace
 let maybeComponent
 
 export function createASTElement (
-  tag: string,
-  attrs: Array<ASTAttr>,
-  parent: ASTElement | void
-): ASTElement {
+  tag,
+  attrs,
+  parent
+) {
   return {
     type: 1,
     tag,
@@ -77,16 +77,16 @@ export function createASTElement (
  * Convert HTML string to AST.
  */
 export function parse (
-  template: string,
-  options: CompilerOptions
-): ASTElement | void {
+  template,
+  options
+) {
   warn = options.warn || baseWarn
 
   platformIsPreTag = options.isPreTag || no
   platformMustUseProp = options.mustUseProp || no
   platformGetTagNamespace = options.getTagNamespace || no
   const isReservedTag = options.isReservedTag || no
-  maybeComponent = (el: ASTElement) => !!el.component || !isReservedTag(el.tag)
+  maybeComponent = (el) => !!el.component || !isReservedTag(el.tag)
 
   transforms = pluckModuleFunction(options.modules, 'transformNode')
   preTransforms = pluckModuleFunction(options.modules, 'preTransformNode')
@@ -94,11 +94,11 @@ export function parse (
 
   delimiters = options.delimiters
 
-  const stack = []
+  const stack = [] // 同于存放父子级关系
   const preserveWhitespace = options.preserveWhitespace !== false
   const whitespaceOption = options.whitespace
-  let root
-  let currentParent
+  let root  // 根节点
+  let currentParent // 当前结点的父节点
   let inVPre = false
   let inPre = false
   let warned = false
@@ -119,20 +119,10 @@ export function parse (
     if (!stack.length && element !== root) {
       // allow root elements with v-if, v-else-if and v-else
       if (root.if && (element.elseif || element.else)) {
-        if (process.env.NODE_ENV !== 'production') {
-          checkRootConstraints(element)
-        }
         addIfCondition(root, {
           exp: element.elseif,
           block: element
         })
-      } else if (process.env.NODE_ENV !== 'production') {
-        warnOnce(
-          `Component template should contain exactly one root element. ` +
-          `If you are using v-if on multiple elements, ` +
-          `use v-else-if to chain them instead.`,
-          { start: element.start }
-        )
       }
     }
     if (currentParent && !element.forbidden) {
@@ -215,48 +205,10 @@ export function parse (
       // inherit parent ns if there is one
       const ns = (currentParent && currentParent.ns) || platformGetTagNamespace(tag)
 
-      // handle IE svg bug
-      /* istanbul ignore if */
-      if (isIE && ns === 'svg') {
-        attrs = guardIESVGBug(attrs)
-      }
 
-      let element: ASTElement = createASTElement(tag, attrs, currentParent)
+      let element = createASTElement(tag, attrs, currentParent)
       if (ns) {
         element.ns = ns
-      }
-
-      if (process.env.NODE_ENV !== 'production') {
-        if (options.outputSourceRange) {
-          element.start = start
-          element.end = end
-          element.rawAttrsMap = element.attrsList.reduce((cumulated, attr) => {
-            cumulated[attr.name] = attr
-            return cumulated
-          }, {})
-        }
-        attrs.forEach(attr => {
-          if (invalidAttributeRE.test(attr.name)) {
-            warn(
-              `Invalid dynamic argument expression: attribute names cannot contain ` +
-              `spaces, quotes, <, >, / or =.`,
-              {
-                start: attr.start + attr.name.indexOf(`[`),
-                end: attr.start + attr.name.length
-              }
-            )
-          }
-        })
-      }
-
-      if (isForbiddenTag(element) && !isServerRendering()) {
-        element.forbidden = true
-        process.env.NODE_ENV !== 'production' && warn(
-          'Templates should only be responsible for mapping the state to the ' +
-          'UI. Avoid placing tags with side-effects in your templates, such as ' +
-          `<${tag}>` + ', as they will not be parsed.',
-          { start: element.start }
-        )
       }
 
       // apply pre-transforms
@@ -284,9 +236,6 @@ export function parse (
 
       if (!root) {
         root = element
-        if (process.env.NODE_ENV !== 'production') {
-          checkRootConstraints(root)
-        }
       }
 
       if (!unary) {
@@ -302,27 +251,11 @@ export function parse (
       // pop stack
       stack.length -= 1
       currentParent = stack[stack.length - 1]
-      if (process.env.NODE_ENV !== 'production' && options.outputSourceRange) {
-        element.end = end
-      }
       closeElement(element)
     },
 
-    chars (text: string, start: number, end: number) {
+    chars (text, start, end) {
       if (!currentParent) {
-        if (process.env.NODE_ENV !== 'production') {
-          if (text === template) {
-            warnOnce(
-              'Component template requires a root element, rather than just text.',
-              { start }
-            )
-          } else if ((text = text.trim())) {
-            warnOnce(
-              `text "${text}" outside root element will be ignored.`,
-              { start }
-            )
-          }
-        }
         return
       }
       // IE textarea placeholder bug
@@ -581,9 +514,6 @@ function findPrevElement (children: Array<any>): ASTElement | void {
 }
 
 export function addIfCondition (el: ASTElement, condition: ASTIfCondition) {
-  if (!el.ifConditions) {
-    el.ifConditions = []
-  }
   el.ifConditions.push(condition)
 }
 
